@@ -17,9 +17,25 @@ const loading = ref(false);
 const handleLogin = async () => {
   try {
     loading.value = true;
-    await login(form.email, form.password);
-    message.success("Bienvenido ✅");
-    router.push("/dashboard");
+    const user = await login(form.email, form.password);
+
+    message.success(`Bienvenido ${user.email} ✅`);
+
+    // 🔧 Redirección según el rol (todo en minúsculas)
+    switch (user.role_name?.toLowerCase()) {
+      case "admin":
+        router.push("/admin/dashboard");
+        break;
+      case "empleado":
+        router.push("/empleado/home");
+        break;
+      case "domiciliario":
+        router.push("/domicilios");
+        break;
+      default:
+        router.push("/cliente/home");
+        break;
+    }
   } catch (error: any) {
     message.error(error.response?.data?.error || "Credenciales inválidas");
   } finally {
@@ -30,9 +46,7 @@ const handleLogin = async () => {
 
 <template>
   <a-layout style="min-height: 100vh; background: #f0f2f5;">
-    <a-layout-content
-      style="display: flex; justify-content: center; align-items: center;"
-    >
+    <a-layout-content style="display: flex; justify-content: center; align-items: center;">
       <a-card
         bordered
         style="
