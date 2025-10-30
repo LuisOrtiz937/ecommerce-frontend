@@ -1,42 +1,101 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
 
+// 🔹 Lazy imports de layouts
+const DashboardLayout = () => import("@/layouts/DashboardLayout.vue");
+const StoreLayout = () => import("@/layouts/StoreLayout.vue");
+
 const routes: RouteRecordRaw[] = [
   { path: "/", redirect: "/login" },
 
+  // --- Autenticación ---
   {
     path: "/login",
     name: "Login",
-    component: () => import("../views/LoginView.vue"),
+    component: () => import("@/views/auth/LoginView.vue"),
   },
   {
-    path: "/admin/dashboard",
-    name: "AdminDashboard",
-    component: () => import("../views/AdminDashboard.vue"),
-    meta: { requiresAuth: true, role: "admin" },
+    path: "/register",
+    name: "Register",
+    component: () => import("@/views/auth/RegisterView.vue"),
   },
   {
-    path: "/empleado/home",
-    name: "EmpleadoHome",
-    component: () => import("../views/EmpleadoHome.vue"),
-    meta: { requiresAuth: true, role: "empleado" },
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: () => import("@/views/auth/ForgotPasswordView.vue"),
   },
   {
-    path: "/cliente/home",
-    name: "ClienteHome",
-    component: () => import("../views/ClienteHome.vue"),
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: () => import("@/views/auth/ResetPasswordView.vue"),
+  },
+
+  // --- Dashboard interno ---
+  {
+    path: "/dashboard",
+    component: DashboardLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "admin",
+        name: "AdminDashboard",
+        component: () => import("@/views/admin/DashboardView.vue"),
+        meta: { role: "admin" },
+      },
+      {
+        path: "empleado",
+        name: "EmpleadoHome",
+        component: () => import("@/views/empleado/EmpleadoHome.vue"),
+        meta: { role: "empleado" },
+      },
+      {
+        path: "domicilios",
+        name: "Domicilios",
+        component: () => import("@/views/domiciliario/DomiciliosView.vue"),
+        meta: { role: "domiciliario" },
+      },
+    ],
+  },
+
+  // --- Tienda (solo cliente) ---
+  {
+    path: "/store",
+    component: StoreLayout,
     meta: { requiresAuth: true, role: "cliente" },
+    children: [
+      {
+        path: "home",
+        name: "ClienteHome",
+        component: () => import("@/views/cliente/HomeView.vue"),
+      },
+      {
+        path: "nosotros",
+        name: "Nosotros",
+        component: () => import("@/views/cliente/NosotrosView.vue"),
+      },
+      {
+        path: "contacto",
+        name: "Contacto",
+        component: () => import("@/views/cliente/ContactoView.vue"),
+      },
+      {
+        path: "pedidos",
+        name: "Pedidos",
+        component: () => import("@/views/cliente/PedidosView.vue"),
+      },
+      {
+        path: "perfil",
+        name: "Perfil",
+        component: () => import("@/views/cliente/ProfileView.vue"),
+      },
+    ],
   },
-  {
-    path: "/domicilios",
-    name: "Domicilios",
-    component: () => import("../views/DomiciliosView.vue"),
-    meta: { requiresAuth: true, role: "domiciliario" },
-  },
+
+  // --- 404 ---
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
-    component: () => import("../views/NotFoundView.vue"),
+    component: () => import("@/views/auth/NotFoundView.vue"),
   },
 ];
 
@@ -45,7 +104,7 @@ const router = createRouter({
   routes,
 });
 
-// ✅ Protección de rutas
+// --- Protección de rutas ---
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem("accessToken");
   const user = localStorage.getItem("user")

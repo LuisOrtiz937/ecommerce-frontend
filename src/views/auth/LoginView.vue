@@ -3,7 +3,7 @@ import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import { UserOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons-vue";
-import { login } from "../services/authService";
+import { login } from "../../services/authService";
 
 const router = useRouter();
 
@@ -17,27 +17,35 @@ const loading = ref(false);
 const handleLogin = async () => {
   try {
     loading.value = true;
+
+    // 🔹 Llamada al servicio de autenticación
     const user = await login(form.email, form.password);
+
+    // 🔹 Guardamos datos en localStorage
+    localStorage.setItem("accessToken", user.accessToken);
+    localStorage.setItem("user", JSON.stringify(user));
 
     message.success(`Bienvenido ${user.email} ✅`);
 
-    // 🔧 Redirección según el rol (todo en minúsculas)
-    switch (user.role_name?.toLowerCase()) {
+    // 🔹 Redirección según el rol
+    const role = user.role_name?.toLowerCase();
+
+    switch (role) {
       case "admin":
-        router.push("/admin/dashboard");
+        router.push("/dashboard/admin");
         break;
       case "empleado":
-        router.push("/empleado/home");
+        router.push("/dashboard/empleado");
         break;
       case "domiciliario":
-        router.push("/domicilios");
+        router.push("/dashboard/domicilios");
         break;
       default:
-        router.push("/cliente/home");
+        router.push("/store/home");
         break;
     }
   } catch (error: any) {
-    message.error(error.response?.data?.error || "Credenciales inválidas");
+    message.error(error.response?.data?.error || "Credenciales inválidas ❌");
   } finally {
     loading.value = false;
   }
@@ -46,7 +54,9 @@ const handleLogin = async () => {
 
 <template>
   <a-layout style="min-height: 100vh; background: #f0f2f5;">
-    <a-layout-content style="display: flex; justify-content: center; align-items: center;">
+    <a-layout-content
+      style="display: flex; justify-content: center; align-items: center;"
+    >
       <a-card
         bordered
         style="
@@ -69,7 +79,9 @@ const handleLogin = async () => {
               size="large"
               required
             >
-              <template #prefix><UserOutlined /></template>
+              <template #prefix>
+                <UserOutlined />
+              </template>
             </a-input>
           </a-form-item>
 
@@ -80,7 +92,9 @@ const handleLogin = async () => {
               size="large"
               required
             >
-              <template #prefix><LockOutlined /></template>
+              <template #prefix>
+                <LockOutlined />
+              </template>
             </a-input-password>
           </a-form-item>
 
@@ -92,17 +106,36 @@ const handleLogin = async () => {
               :loading="loading"
               @click="handleLogin"
             >
-              <template #icon><LoginOutlined /></template>
+              <template #icon>
+                <LoginOutlined />
+              </template>
               Ingresar
             </a-button>
           </a-form-item>
 
           <div style="text-align: center; margin-top: 10px; color: #888;">
             ¿Olvidaste tu contraseña?
-            <a style="margin-left: 5px;">Recuperar</a>
+            <a style="margin-left: 5px;" @click="$router.push('/forgot-password')">
+              Recuperar
+            </a>
+          </div>
+          <div style="text-align: center; margin-top: 10px; color: #888;">
+            ¿No tienes cuenta?
+            <a style="margin-left: 5px;" @click="$router.push('/register')">
+              Regístrate
+            </a>
           </div>
         </a-form>
       </a-card>
     </a-layout-content>
   </a-layout>
 </template>
+
+<style scoped>
+a {
+  color: #1677ff;
+}
+a:hover {
+  text-decoration: underline;
+}
+</style>
